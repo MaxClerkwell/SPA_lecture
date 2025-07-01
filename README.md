@@ -2,13 +2,13 @@
 
 ## Vom CERN zur SPA
 
-Die Entwicklung von Single Page Applications (SPAs) ist eng mit der Geschichte des Webs selbst verbunden. Die allerersten Websites entstanden Anfang der 1990er-Jahre am CERN, wo Tim Berners-Lee das World Wide Web erfand. Diese Seiten waren rein statisch: einfache HTML-Dokumente, die auf Servern abgelegt und von Browsern geladen wurden. Jede Benutzerinteraktion erforderte ein vollständiges Neuladen der Seite, was den Funktionsumfang und die Benutzererfahrung stark einschränkte.
+Die Entwicklung von [Single Page Applications (SPAs)](https://de.wikipedia.org/wiki/Single-Page-Webanwendung) ist eng mit der Geschichte des Webs selbst verbunden. Die allerersten Websites entstanden Anfang der 1990er-Jahre am CERN, wo Tim Berners-Lee das World Wide Web erfand. Diese Seiten waren rein statisch: einfache HTML-Dokumente, die auf Servern abgelegt und von Browsern geladen wurden. Jede Benutzerinteraktion erforderte ein vollständiges Neuladen der Seite, was den Funktionsumfang und die Benutzererfahrung stark einschränkte.
 
 Mit dem Aufkommen des Internets als Massenmedium in den späten 1990er- und frühen 2000er-Jahren stiegen die Anforderungen rasant. Nutzer erwarteten dynamischere Inhalte, interaktive Oberflächen und Anwendungen, die eher Desktop-Software ähnelten. Ein entscheidender Meilenstein war die Einführung von JavaScript (1995), das es ermöglichte, Inhalte im Browser *dynamisch* zu verändern, ohne die Seite neu zu laden.
 
 Ein weiterer wichtiger Fortschritt war die Entwicklung von *XMLHttpRequest* (um 1999), das den Grundstein für *AJAX* (Asynchronous JavaScript and XML) legte. AJAX erlaubte es erstmals, asynchrone Daten vom Server zu laden, wodurch Webanwendungen reaktiver und nutzerfreundlicher wurden. Google Maps (2005) und Gmail (2004) sind berühmte Beispiele für den erfolgreichen Einsatz dieser Technologie und gelten als Wegbereiter moderner SPAs.
 
-Die zunehmende Komplexität solcher Anwendungen machte Frameworks notwendig. Mit *AngularJS* (2010), dem ersten populären SPA-Framework, begann eine neue Ära. Es folgten React (2013) und Vue (2014), die weitere Innovationen wie *komponentenbasierte Architektur* und *Virtual DOM* einführten. Heute sind SPAs ein Standard für viele Webanwendungen, getrieben von den gestiegenen Anforderungen an Performance, Usability und Sicherheit. Diese Entwicklung war nur möglich durch die Kombination aus technischen Fortschritten und den wachsenden Erwartungen der Nutzer an das Web.
+Die zunehmende Komplexität solcher Anwendungen machte Frameworks notwendig. Mit *AngularJS* (2010), dem ersten populären SPA-Framework, begann eine neue Ära. Seit 2016 gibt es [dessen Nachfolger *Angular2*](https://de.wikipedia.org/wiki/Angular)(aktuelle Version 20 - Stand Juli 2025). Es folgten React (2013) und Vue (2014), die weitere Innovationen wie *komponentenbasierte Architektur* und *Virtual DOM* einführten. Heute sind SPAs ein Standard für viele Webanwendungen, getrieben von den gestiegenen Anforderungen an Performance, Usability und Sicherheit. Diese Entwicklung war nur möglich durch die Kombination aus technischen Fortschritten und den wachsenden Erwartungen der Nutzer an das Web.
 
 > Eine Single Page Application (SPA) ist eine Webanwendung, die nur eine HTML-Seite lädt und Inhalte dynamisch nachlädt, sodass der Browser nie die komplette Seite neu laden muss.
 
@@ -269,7 +269,14 @@ Der virtuelle DOM ist ein Abstraktionslayer, der UI-Änderungen zuerst in JavaSc
 @Component({
     standalone: true,
     selector: 'app-hello',
-    template: `<h1>Hello World!</h1>`
+    template: `<h1>Hello World!</h1>`,
+    imports: [
+    // verschiedene Abhängigkeiten, die die Komponente direkt braucht
+    ],
+    providers: [
+    // zBsp. Services, die nur diese Komponente braucht
+    // andere Objekte, die in der Komponente injiziert werden sollen
+    ],
 })
 export class HelloComponent {}
 ```
@@ -279,14 +286,36 @@ export class HelloComponent {}
 ### Komponenten
 
 * **Standards**: Template (HTML), Styles (CSS/SCSS), Klassenlogik (TypeScript)
-* **Standalone**: Komponenten markieren mit `standalone: true`, können direkt in `bootstrapApplication()` oder als `imports` in anderen Komponenten verwendet werden.
-* **Inputs/Outputs**: Kommunikation über `@Input()` und `@Output()` bleibt identisch.
+* **Standalone**: Komponenten markieren mit `standalone: true`, als `imports` in anderen Komponenten verwendet werden.
+* **Inputs/Outputs**: Kommunikation über `@Input()` und `@Output()` bzw. `input = input.required<string>();` oder `input = input<string>()`
+* * Input -> Daten werden der Komponente übergeben und Angular bekommt Änderungen mit
+  * Output -> Daten können für Elternkomponenten bereit gestellt werden
+ 
+```html
+<h2>Parent Component</h2>
+<app-child [message]="parentMessage" (notify)="onNotify($event)"></app-child>
+```
+```ts
+import { Component } from '@angular/core';
+import { ChildComponent } from '.somehwere';
+
+@Component({
+  selector: 'app-parent',
+  standalone: true,
+  imports: [ChildComponent],
+  templateUrl: './parent.component.html',
+})
+export class ParentComponent {
+  parentMessage = 'Hello from Parent!';
+}
+```
 
 ### Services & DI
 
 * **Services** deklarieren mit `@Injectable({ providedIn: 'root' })` oder in `providers` eines Moduls/Components.
 * **Standalone Mode**: Auch ohne Module verfügbar, da DI über `bootstrapApplication()` initialisiert.
 * **Tree-Shakable Providers**: Nur genutzte Services landen im Bundle.
+* Geteilte Logik: Services sind immer dann nützlich, wenn mehrere Komponenten den gleichen Zustand bzw. die gleichen Methoden brauchen
 
 ### Observables & Reactive Programming
 
@@ -306,7 +335,9 @@ items$ = this.dataService.getItems();
 
 ```html
 <ul>
-<li *ngFor="let item of items$ | async">{{ item.name }}</li>
+  @for (item of items$ | async; track item) {
+    <li>{{ item.name }}</li>
+  }
 </ul>
 ```
 * **Vorteil**: Reaktive Verarbeitung, einfache Fehlerbehandlung und Komposition mehrerer asynchroner Ströme.
